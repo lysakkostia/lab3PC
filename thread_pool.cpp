@@ -40,7 +40,9 @@ void ThreadPool::worker_routine( TaskQueue& queue )
             std::unique_lock<std::mutex> lock( m_cv_mutex );
             auto wait_start = std::chrono::steady_clock::now();
 
-            m_cv.wait( lock, [ this, &queue ] { return m_stop || !queue.empty(); } );
+            m_cv.wait( lock, [ this, &queue ] { return m_stop || (!queue.empty() && !m_paused); } );
+
+            if ( m_immediate_stop ) return;
 
             auto wait_end = std::chrono::steady_clock::now();
             std::chrono::duration<double> diff = wait_end - wait_start;
@@ -52,19 +54,46 @@ void ThreadPool::worker_routine( TaskQueue& queue )
         }
 
         task();
-        m_metrics.completed_tasks++;
+
+        if ( !m_immediate_stop ) {
+            m_metrics.completed_tasks++;
+        }
     }
 }
 
-void ThreadPool::terminate()
+void ThreadPool::terminate( bool immediate )
 {
     {
         std::lock_guard<std::mutex> lock( m_cv_mutex );
         m_stop = true;
+        m_immediate_stop = immediate;
+        m_paused = false;
     }
     m_cv.notify_all();
+
     for ( auto& t : m_workers )
     {
         if ( t.joinable() ) t.join();
     }
+}
+
+void ThreadPool::pause()
+{
+    std::lock_guard<std::mutex> lock( m_cv_mutex );
+    m_paused = true;
+}
+
+void ThreadPool::resume()
+{
+    {
+        std::lock_guard<std::mutex> lock( m_cv_mutex );
+        m_paused = false;
+    }
+    m_cv.notify_all();
+}
+
+bool ThreadPool::is_stopped() const
+{
+    std::lock_guard<std::mutex> lock( const_cast<std::mutex&>(m_cv_mutex) );
+    return m_immediate_stop;
 }

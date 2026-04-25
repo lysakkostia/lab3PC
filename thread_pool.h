@@ -13,7 +13,10 @@ public:
 
     void add_task( std::function<void()> task, int duration, int id );
 
-    void terminate();
+    void terminate( bool immediate = false );
+    void pause();
+    void resume();
+    bool is_stopped() const;
 
 private:
     void worker_routine( TaskQueue& queue );
@@ -23,5 +26,7 @@ private:
     std::condition_variable m_cv;
     std::mutex m_cv_mutex;
     bool m_stop = false;
+    bool m_immediate_stop = false;
+    bool m_paused = false;
     Metrics& m_metrics;
 };
