@@ -21,12 +21,14 @@ public:
     double get_queue_average_length( int queue_index ) const;
 
 private:
+
     void worker_routine( TaskQueue& queue );
 
     TaskQueue m_queues[2];
     std::vector<std::thread> m_workers;
     std::condition_variable m_cv;
     std::mutex m_cv_mutex;
+    std::mutex m_routing_mutex;
     bool m_stop = false;
     bool m_immediate_stop = false;
     bool m_paused = false;

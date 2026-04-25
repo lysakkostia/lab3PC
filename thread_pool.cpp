@@ -17,14 +17,18 @@ void ThreadPool::initialize()
 
 void ThreadPool::add_task( std::function<void()> task, int duration, int id )
 {
-    if ( m_queues[0].get_total_duration() <= m_queues[1].get_total_duration() )
     {
-        m_queues[0].push( task, duration, id );
+        std::lock_guard<std::mutex> lock( m_routing_mutex );
+        if ( m_queues[0].get_total_duration() <= m_queues[1].get_total_duration() )
+        {
+            m_queues[0].push( task, duration, id );
+        }
+        else
+        {
+            m_queues[1].push( task, duration, id );
+        }
     }
-    else
-    {
-        m_queues[1].push( task, duration, id );
-    }
+
     m_cv.notify_all();
 }
 
