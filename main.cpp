@@ -26,7 +26,7 @@ int main()
         std::cout << "КЕРУВАННЯ:\n";
         std::cout << " 'q' - Негайна зупинка (перервати все)\n";
         std::cout << " 'p' - Пауза\n";
-        std::cout << " 'r' - Відновити (Resume)\n\n";
+        std::cout << " 'r' - Відновити\n\n";
     }
 
     std::thread control_thread( [ & ]()

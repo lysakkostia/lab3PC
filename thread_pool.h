@@ -8,7 +8,7 @@
 
 class ThreadPool {
 public:
-    ThreadPool(Metrics& m);
+    ThreadPool( Metrics& m );
     void initialize();
 
     void add_task( std::function<void()> task, int duration, int id );

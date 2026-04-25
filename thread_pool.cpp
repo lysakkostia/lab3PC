@@ -2,7 +2,7 @@
 #include <iostream>
 #include <chrono>
 
-ThreadPool::ThreadPool(Metrics& m) : m_metrics(m) {}
+ThreadPool::ThreadPool( Metrics& m ) : m_metrics(m) {}
 
 void ThreadPool::initialize()
 {
@@ -44,7 +44,7 @@ void ThreadPool::worker_routine( TaskQueue& queue )
             std::unique_lock<std::mutex> lock( m_cv_mutex );
             auto wait_start = std::chrono::steady_clock::now();
 
-            m_cv.wait( lock, [ this, &queue ] { return m_stop || (!queue.empty() && !m_paused); } );
+            m_cv.wait( lock, [ this, &queue ] { return m_stop || ( !queue.empty() && !m_paused ); } );
 
             if ( m_immediate_stop ) return;
 
@@ -105,7 +105,7 @@ void ThreadPool::resume()
 
 bool ThreadPool::is_stopped() const
 {
-    std::lock_guard<std::mutex> lock( const_cast<std::mutex&>(m_cv_mutex) );
+    std::lock_guard<std::mutex> lock( const_cast<std::mutex&>( m_cv_mutex ) );
     return m_immediate_stop;
 }
 
