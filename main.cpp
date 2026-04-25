@@ -155,6 +155,8 @@ int main()
             std::cout << "Середній час знаходження потоку в стані очікування (на 1 задачу): "
                       << ( total_wait / completed ) << "с" << std::endl;
         }
+        std::cout << "Середня довжина 1-ї черги: " << pool.get_queue_average_length( 0 ) << std::endl;
+        std::cout << "Середня довжина 2-ї черги: " << pool.get_queue_average_length( 1 ) << std::endl;
         std::cout << "========================================" << std::endl;
     }
     return 0;

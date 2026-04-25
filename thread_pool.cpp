@@ -53,9 +53,16 @@ void ThreadPool::worker_routine( TaskQueue& queue )
             if ( !queue.pop( task, added_time, id ) ) continue;
         }
 
+        auto exec_start = std::chrono::steady_clock::now();
+
         task();
 
-        if ( !m_immediate_stop ) {
+        auto exec_end = std::chrono::steady_clock::now();
+
+        if ( !m_immediate_stop )
+        {
+            std::chrono::duration<double> exec_diff = exec_end - exec_start;
+            m_metrics.record_execution_time( exec_diff.count() );
             m_metrics.completed_tasks++;
         }
     }
@@ -96,4 +103,13 @@ bool ThreadPool::is_stopped() const
 {
     std::lock_guard<std::mutex> lock( const_cast<std::mutex&>(m_cv_mutex) );
     return m_immediate_stop;
+}
+
+double ThreadPool::get_queue_average_length( int queue_index ) const
+{
+    if ( queue_index >= 0 && queue_index < 2 )
+    {
+        return m_queues[queue_index].get_average_length();
+    }
+    return 0.0;
 }

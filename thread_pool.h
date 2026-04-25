@@ -18,6 +18,8 @@ public:
     void resume();
     bool is_stopped() const;
 
+    double get_queue_average_length( int queue_index ) const;
+
 private:
     void worker_routine( TaskQueue& queue );
 
