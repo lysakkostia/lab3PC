@@ -6,6 +6,9 @@
 #include <random>
 #include <iomanip>
 #include <atomic>
+#include <mutex>
+
+std::mutex print_mutex;
 
 int main() {
 
@@ -16,7 +19,10 @@ int main() {
 
     std::atomic<int> global_task_id{1};
 
-    std::cout << "--- Пул потоків запущено (2 черги, 4 потоки) ---\n" << std::endl;
+    {
+        std::lock_guard<std::mutex> lock( print_mutex );
+        std::cout << "--- Пул потоків запущено (2 черги, 4 потоки) ---\n" << std::endl;
+    }
 
     std::vector<std::thread> producers;
     for ( int i = 0; i < 3; ++i )
@@ -36,8 +42,11 @@ int main() {
 
                 int id = global_task_id.fetch_add( 1 );
 
-                std::cout << "[Producer " << i << "] Додано задачу №" << id
-                          << " (тривалість: " << duration << "с)\n";
+                {
+                    std::lock_guard<std::mutex> lock( print_mutex );
+                    std::cout << "[Producer " << i << "] Додано задачу №" << id
+                              << " (тривалість: " << duration << "с)\n";
+                }
 
                 pool.add_task( [duration, id ]()
                 {
@@ -64,19 +73,21 @@ int main() {
     double total_wait = stats.total_waiting_time.load();
     size_t completed = stats.completed_tasks.load();
 
-    std::cout << "========================================" << std::endl;
-    std::cout << "РЕЗУЛЬТАТИ ТЕСТУВАННЯ" << std::endl;
-    std::cout << "========================================" << std::endl;
-    std::cout << "Кількість створених потоків: 4" << std::endl;
-    std::cout << "Виконано задач: " << completed << std::endl;
-    std::cout << "Загальний час очікування воркерів: " << std::fixed << std::setprecision(2) << total_wait << "с" << std::endl;
+    {
+        std::lock_guard<std::mutex> lock( print_mutex );
+        std::cout << "========================================" << std::endl;
+        std::cout << "РЕЗУЛЬТАТИ ТЕСТУВАННЯ" << std::endl;
+        std::cout << "========================================" << std::endl;
+        std::cout << "Кількість створених потоків: 4" << std::endl;
+        std::cout << "Виконано задач: " << completed << std::endl;
+        std::cout << "Загальний час очікування воркерів: " << std::fixed << std::setprecision(2) << total_wait << "с" << std::endl;
 
-    if (completed > 0) {
-        std::cout << "Середній час очікування на 1 потік: " << (total_wait / 4.0) << "с" << std::endl;
-        std::cout << "Середній час знаходження потоку в стані очікування (на 1 задачу): "
-                  << (total_wait / completed) << "с" << std::endl;
+        if (completed > 0) {
+            std::cout << "Середній час очікування на 1 потік: " << (total_wait / 4.0) << "с" << std::endl;
+            std::cout << "Середній час знаходження потоку в стані очікування (на 1 задачу): "
+                      << (total_wait / completed) << "с" << std::endl;
+        }
+        std::cout << "========================================" << std::endl;
     }
-    std::cout << "========================================" << std::endl;
-
     return 0;
 }
